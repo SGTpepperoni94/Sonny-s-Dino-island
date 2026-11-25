@@ -1,0 +1,8 @@
+{
+  "name": "Remix Pirate \u0026 Dino Island Discovery - muse",
+  "description": "A sunlit 3D low-poly pirate and dinosaur open-world island adventure starring Sonny.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

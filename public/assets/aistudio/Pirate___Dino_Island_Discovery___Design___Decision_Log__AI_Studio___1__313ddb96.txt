@@ -1,0 +1,88 @@
+﻿Pirate & Dino Island Discovery — Master Design & Technical Reference (AI Studio)
+Status: Build 1 Ready — Complete Context & Zero-Ambiguity Spec (Attach Directly to AI Studio)
+Target Platform: Google AI Studio Build (React 19 + TypeScript + Three.js + Vite, browser playable)
+Audience: Young Kids (Ages 3–5, starring Sonny & Artie)
+________________
+
+
+1. Core Vision, Family Cast & Full-Game Scope
+* Working Title & Family Cast: A sunlit, joyous 3D pirate & dinosaur open-world discovery game starring Sonny (age 3, playable captain) and his baby brother Artie (pirate sidekick/co-captain). Captain Seahawk (Dad) is the friendly harbor mentor chatting in Animalese with picture speech bubbles. Pirate Pete is the goofy, harmless LEGO-style villain who pops into coins and confetti when bonked. Includes a special Pirate Bed Ship home vessel easter egg.
+* Zero-Reading Design (100% Language-Free): Playable without reading English. All guidance uses picture speech bubbles, universal icons, glowing cues, expressive animations, and Animal Crossing-style "Animalese" gibberish synth voices.
+* One Expansive 6-Biome Island (7/7 UI-Free Reference Images Locked):
+   * Pirate Harbor & Sunny Meadow / Future Dino Ranch (South Coast — Spawn): Wide golden-sand bay curving up into a flat lime-green meadow plateau, with a worn dirt trail inland, Pirate Kit shacks/barrels/palms, and Ship_Small anchored offshore.
+   * Whispering Fern Jungle (West): Rolling emerald-green hills with a winding warm ochre dirt footpath and lush foliage clusters.
+   * Ancient Dino Ruins (Northwest Ridge): Elevated stepped mossy-stone plateaus connected by natural walkable sloped ramps overlooking the ocean.
+   * Smoking Volcano Ridge (Northeast Peak): Charcoal-purple faceted volcano with a safe, wide walkable sandy-rock ridge trail, a glowing warm amber-orange lava channel set cleanly below the path, and rising stylized low-poly white smoke puffs.
+   * Crystal Waterfall Lagoon (East Coast): Sandy aquamarine cove fed by an animated white-and-cyan waterfall cascading down a mossy cliff with foamy splash rings.
+* Skull Rock Pirate Cave (Southeast Coastline — Between Pirate Harbor's East Edge and Crystal Waterfall Lagoon): Carved into the coastal cliff headland facing the turquoise bay so Sonny spots it from the harbor. Features a massive, kid-friendly low-poly carved pirate skull wearing a red bandana and eyepatch with a warm glowing amber eye socket, plus an open-jaw archway leading into a torchlit interior cavern with BOTH a walkable stone ledge (connected to the beach trail) and a shallow turquoise water inlet channel (for Build 2+ rafting).
+* Full-Game Features (Build 2+ — DO NOT BUILD IN BUILD 1, ARCHITECT HOOKS ONLY):
+   * Dino Eggs & Full Quaternius Dino Roster: Color-coded, easy-to-find Dino Eggs (many out in the open + gentle sparkle/chime cues). Pick up and throw to hatch every dino in the Quaternius Animated Dinosaurs pack. Hatched dinos follow Sonny, live in the Dino Ranch, fill a Picture Dino-Dex, and when ridden have both a playful traversal ability AND a specific cartoon attack.
+   * Zero-Cost Hybrid Building: Free glowing LEGO-Style Build Pads across the island (hold 1 button to snap bridges, ziplines, campfires, pens) + Free Sticker-Stamp Builder inside the Dino Ranch. Coins and gems are pure celebratory shinies.
+   * Multi-Modal Traversal & Toys: Rideable dinos, ziplines, coastal wooden raft, simple 1-button fishing (Prop_Fish_Tuna, Prop_Fish_Mackerel, Prop_Bucket_Fishes), pull-levers, movable objects, smashable barrels, and goofy LEGO-style combat (zero puzzles, zero gore, zero punishing game overs).
+________________
+
+
+2. Build 1 Exact Specification (Zero-Ambiguity Decisions — DO NOT ASK QUESTIONS)
+Build 1 builds ONLY the 6-biome island + playable Sonny + effortless controls/camera + ocean/lighting + audio/calm.mp3 + Performance & Agentic Architecture. Do NOT add Dino Eggs, dinos, combat, fishing, NPCs, or Ranch building yet.
+* Playable Character (Sonny): Use Characters_Henry from the Quaternius Pirate Kit (scale 1.0, faces +Z natively, feet at y = 0; do NOT attach loose weapons). Include a playful Wave emote button (plays the verified 'Wave' animation clip with a cheerful chime).
+* Deep Water & Volcano Lava Boundaries (Kid-Safe): Sonny can splash happily in shallow beach and lagoon water (with cartoon splash ripples and sound), while gentle invisible guardrails smoothly slide him along deep-ocean boundaries and the volcano lava channel rim—zero drowning, zero lava damage, zero getting stuck, zero game overs.
+* Effortless 3–5 Year Old Controls (All 4 Input Modes Active in Build 1):
+   * Auto-Follow Behind-the-Back Camera: Smoothly centers behind Sonny as he runs (no right thumbstick required), while still allowing optional manual orbit.
+   * Gamepad Controller (Primary): Left Stick move, A Jump, X / RT Playful Wave (future Action/Bonk/Lever/Build/Fish), optional Right Stick camera look. Apply 0.15 stick deadzone; invert Y (moveZ = -ly).
+   * Keyboard-Only: Both WASD AND Arrow Keys move Sonny, Space Jump, E or F Wave/Action, Q/R optional camera yaw. Clear all held keys on window.blur.
+   * Simple Desktop Mouse Controls:
+      * Left-Click & Hold on terrain (Click-to-Run): Sonny runs smoothly toward the ground point under the cursor so a 3-year-old or one-handed tester can explore using only the mouse.
+      * Right-Click & Drag (Optional): Gently orbits the camera around Sonny (suppress contextmenu on <canvas> only; auto-follow resumes smoothly once released and moving).
+      * Middle/Double-Click or HUD Icon Click: Triggers Jump / Wave cleanly without clicking through UI (closest('button, input, [data-ui-interactive="true"]')).
+   * Mobile Touch (Auto-Shown on Touch Devices): Clean floating virtual thumbstick (bottom-left) + two big, colorful icon-only buttons (bottom-right: Jump arrow icon + Playful Wave hand icon).
+* Title Screen & Zero-Text HUD:
+   * Live 3D orbiting view of Sunny Pirate Harbor with a giant zero-text Play icon button and a tiny subtle build-timestamp stamp in the corner.
+   * During gameplay: ultra-clean, zero-text HUD (tiny top-right Mute Music icon button, optional subtle icon-only Wave/Jump hints on touch, and a collapsible ?debug biome teleport bar for testing).
+________________
+
+
+3. Proven Technical Core, Quaternius CDN & Asset Lineup
+3.1 Proven Stack, Renderer & Lighting (Reuse Exactly)
+* Packages: three (^0.187.0), react / react-dom (^19), vite, tailwindcss, typescript ("strict": true).
+* Renderer & Software-WebGL Guard: Detect SwiftShader|llvmpipe|softpipe|Software|Basic Render via UNMASKED_RENDERER_WEBGL. If software WebGL: disable AA/shadows, pixelRatio = 1, skip renderer.compile(). On hardware WebGL: antialias: true, powerPreference: 'high-performance', outputColorSpace = THREE.SRGBColorSpace, toneMapping = THREE.ACESFilmicToneMapping, toneMappingExposure = 0.98, pixelRatio = Math.min(window.devicePixelRatio, isTouch ? 1.5 : 2), shadowMap.enabled = true, shadowMap.type = THREE.PCFSoftShadowMap. Call renderer.compile(scene, camera) once post-generation.
+* Sky, Fog, PMREM & Moving Shadow Frustum:
+   * scene.background = new THREE.Color(0x1d9bf0), scene.fog = new THREE.FogExp2(0x5cc3ff, 0.00075).
+   * PMREMGenerator from RoomEnvironment (0.04) -> scene.environment, dispose pmrem, retain and dispose envRenderTarget on teardown.
+   * HemisphereLight(0x6ecaff, 0xd99b4e, 0.88) + DirectionalLight(0xfff3d1, 1.5) offset (-45, 72, -35) from Sonny.
+   * Move dirLight.position and dirLight.target.position every frame to track Sonny with a compact 1024x1024 ortho frustum (±55, near: 5, far: 220, bias: -0.0005, normalBias: 0.02).
+* 60fps GPU-Wave Ocean: PlaneGeometry(2100, 2100, 96, 96) rotated -Math.PI / 2, baked vertex colors (0x00c4d4 turquoise -> 0x0072bc cerulean), flatShading: true, roughness: 0.22, metalness: 0.12, transparent: true, opacity: 0.94. Displace transformed.y via mat.onBeforeCompile + uTime: sin(x * 0.065 + uTime * 1.65) * 0.22 + cos(z * 0.055 + uTime * 1.35) * 0.18, mirrored on CPU in OceanSystem.getWaveHeight(x, z, time). Shoreline foam uses polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1.
+* AudioEngine (audio/calm.mp3): Stream https://cdn.jsdelivr.net/gh/SGTpepperoni94/quaternius-pirate-kit@main/audio/calm.mp3 (crossOrigin = "anonymous", loop = true, default volume 0.35). Silent on Title Screen; fade in smoothly (1.5s) on Play and keep playing everywhere on the island. Include subtle procedural Web Audio SFX (footsteps, jump hop, water splash, playful wave chime) unlocked on first gesture.
+3.2 Quaternius Pirate Kit CDN & Verified Quirks (Live Now)
+* Pinned Manifest URL: https://cdn.jsdelivr.net/gh/SGTpepperoni94/quaternius-pirate-kit@d630aa4139033709a52cd6ae8aa314deb77c83c9/manifest.json
+* Pinning Quirk: Override manifest.baseUrl with https://cdn.jsdelivr.net/gh/SGTpepperoni94/quaternius-pirate-kit@d630aa4139033709a52cd6ae8aa314deb77c83c9/models/ for immutable fetches. Evict failed loadingPromises on timeout/error so retries work.
+* Cloning & Shared-Buffer Rule: Use SkeletonUtils.clone(gltf.scene) for rigged characters (Characters_*) and gltf.scene.clone(true) for static props. Tag every GLTF child mesh userData.sharedResource = true and NEVER dispose shared GLTF buffers during scene teardown—only inside AssetManager.dispose().
+* Verified Scales: Characters_Henry (1.0, feet at y = 0, faces +Z), Ship_Small (1.05, waterline waveY - 0.15), Environment_House1 (0.66), Environment_House2 (0.70), Environment_Sawmill (0.75), Environment_PalmTree_1..3 (1.75–2.4), Environment_Rock_1..5 (1.3–2.1), Environment_Cliff4 (1.5), Environment_LargeBones (1.75), Environment_Skulls (1.4–1.6), Prop_Barrel (1.15), Prop_Chest_Closed (1.25). Procedurally vary scale, Y-rotation, and subtle HSL color tints on cloned foliage/rocks.
+* Verified Animation Clips (14 clips): Idle, Walk, Run, Jump, Jump_Idle, Jump_Land, Sword, Punch, Duck, HitReact, Death, Wave, Yes, No. Always exact-name match before .includes() so 'Idle' never matches 'Jump_Idle'. Transition via mixer.stopAllAction(); mixer.clipAction(clip).reset().fadeIn(0.12).play();.
+3.3 Planned Future Packs & Procedural Toys (Build 2+ Sockets)
+* Planned Quaternius CC0 Packs (CDN Drop-In Later): Pack 2 Animated Dinosaurs, Pack 3 Ultimate Stylized Nature, Pack 4 Farm/Crops, Pack 5 Survival, Pack 6 Ultimate Animated Animals.
+* Procedural Stylized Three.js Landmarks & Toys: Giant Pirate Skull Cave entrance + torchlit interior tunnel (Build 1), animated waterfall & glowing volcano lava/smoke (Build 1), plus spotted Dino Eggs, red pull-levers, ziplines, glowing LEGO Build Pads, fishing rod/bobber, bouncy mushrooms, coastal raft, picture speech bubbles, and the custom Pirate Bed Ship (Build 2+).
+________________
+
+
+4. Performance Budget & 8-Pillar Agentic Longevity Architecture
+4.1 Hard Performance Budget (60fps Desktop / Smooth Mobile)
+* Draw-Call Ceiling (<= 150 calls/frame): Batch repeated static props (palms, rocks, ferns, grass tufts) into THREE.InstancedMesh (setMatrixAt + setColorAt HSL tinting). Pool all particles (volcano smoke, waterfall mist, splash rings) into pre-allocated InstancedMesh pools with frustumCulled = false.
+* GPU-Only Shaders & Zero-GC Frame Loop: Ocean waves, waterfall scrolling, lava glow, and foliage sway run via shader uniforms—never per-frame CPU vertex buffer mutations. Pre-allocate module/class-level Vector3, Quaternion, and Matrix4 scratch objects outside update(dt).
+* React Decoupling: Keep requestAnimationFrame inside GameEngine (dt clamped 0.001..0.05), throttle React HUD snapshots to ~9 Hz (110ms) or discrete events, and ban CSS backdrop-blur over the WebGL canvas.
+* Distance Throttling (Build 2+) & Telemetry: Pause AnimationMixer and throttle AI beyond ~90m. Expose { calls, triangles, geometries, textures, fps } via window.__SONNY_ISLAND__.getPerfStats().
+4.2 Agentic Longevity Architecture (8 Mandatory Pillars)
+1. Spatial Contract (src/world/TerrainQuery.ts + src/config/worldAnchors.ts): Pure deterministic getTerrainHeight(x, z), getTerrainNormal(x, z), isWalkable(x, z), getBiomeAt(x, z), a reserved-footprint registry, and 8 named WORLD_ANCHORS (harborSpawn, ranchCenter, jungleTrail, ruinsTerrace, volcanoSummit, lagoonDock, skullCaveMouth, skullCaveInterior).
+2. Semantic Asset Catalog (src/config/assets.ts): Gameplay/world code requests logical keys ('flora.palm', 'structure.house1', 'ship.sloop', plus reserved slots for 'dino.trex', 'ranch.fence', 'hero.bedShip') mapped to { packId, modelKey, scale, yOffset, tintRange } so Packs 2–6 swap in via 1-line config edits.
+3. Plugin System Registry (IGameSystem) & Strict File Budget: Subsystems implement { id, init(ctx), update(dt), dispose() }. Keep every file <250 lines (hard cap 350) with strict one-way imports (types -> config -> engine -> world -> gameplay -> ui).
+4. Central InteractionArbitrator (src/engine/InteractionArbitrator.ts): Lightweight IInteractable contract (id, position, radius, priority, icon, canInteract, onInteract) picking one facing-cone winner so Sonny's 3-button layout never fires two actions simultaneously in Build 2+.
+5. Versioned SaveManager (schemaVersion: 1 + migrateSave()) & Shared MaterialLibrary: Keep durable save data separate from Three.js objects and centralize flat-shaded low-poly palette materials.
+6. Dual-Layer Verification (?test + Pure Logic Split): Keep pure math/state free of DOM/WebGL imports for deterministic tests, and expose window.__SONNY_ISLAND__ (teleportToBiome(name), getPerfStats(), runSelfTest()) asserting draw calls <= 150, valid finite heights across all 8 WORLD_ANCHORS, walkable spawn, zero NaN transforms, and zero geometry/texture leak growth across reset cycles.
+7. Docs-as-Code In-Repo Memory (docs/): Maintain concise docs/ARCHITECTURE.md, docs/CONTRACTS.md, docs/KNOWN_GOTCHAS.md, and docs/CHANGELOG.md inside the workspace.
+________________
+
+
+5. Phased Execution Roadmap & Adapted Create-with-Mark Loop
+8. Workflow: Attach this Master Reference Document + the 7 UI-free reference images -> run Build 1 -> play the first 60 seconds -> inspect screenshots -> iterate using Mark's 5-Part Revision Note(Lock working elements / Integer score 1–8 / Target 9 / 2–4 specific flaws + screenshot / Put improvements in the first minute).
+9. Phase 1 (Build 1 — Active Now): 6-biome island + Skull Rock Pirate Cave + Playable Sonny (Characters_Henry) + 4-mode controls + audio/calm.mp3 + Performance Budget + 8-Pillar Agentic Architecture.
+10. Phase 2 (Build 2): First-Minute Hook (Captain Seahawk in Animalese, glowing Dino Egg pickup/throw/hatch, pull-levers, smashable barrels, Dino Ranch sanctuary, 1-button fishing).
+11. Phase 3 (Build 3+): Publish Quaternius Packs 2–6 to GitHub/jsDelivr (real rigged Dinos, Nature, Farm, Survival, Animals), Dino riding + attacks, LEGO Build Pads, Ranch Sticker-Stamp Builder, Pirate Pete LEGO combat, and optional custom Tripo .glb Pirate Bed Ship.
