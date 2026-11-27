@@ -1,3 +1,4 @@
+import { DECK_TOP, onDockDeck } from '../config/docks';
 import { applyStickDeadzone } from '../engine/InputGamepad';
 import { computeTerrainHeight, isInShallowWater, isPositionWalkable } from '../world/terrainMath';
 
@@ -51,8 +52,19 @@ export function shortestAngleDelta(from: number, to: number): number {
   return diff;
 }
 
+export function getPlayerSupportHeight(x: number, z: number): number {
+  const ground = computeTerrainHeight(x, z);
+  return onDockDeck(x, z) ? Math.max(ground, DECK_TOP) : ground;
+}
+
+function canStepTo(x: number, z: number, feetY: number): boolean {
+  // A shore approach has a small step. A high deck edge seen from the water is solid.
+  if (onDockDeck(x, z)) return feetY + 0.35 >= DECK_TOP;
+  return isPositionWalkable(x, z);
+}
+
 export function createPlayerKinematics(x: number, z: number, yaw: number): PlayerKinematicsState {
-  const groundY = computeTerrainHeight(x, z);
+  const groundY = getPlayerSupportHeight(x, z);
   return {
     x,
     y: groundY,
@@ -64,7 +76,7 @@ export function createPlayerKinematics(x: number, z: number, yaw: number): Playe
     grounded: true,
     coyoteTimer: COYOTE_TIME,
     jumpBufferTimer: 0,
-    inShallowWater: isInShallowWater(x, z),
+    inShallowWater: isInShallowWater(x, z) && !onDockDeck(x, z),
     speed: 0,
     squashX: 1,
     squashY: 1,
@@ -102,14 +114,14 @@ export function stepPlayerKinematics(
   const nextZ = state.z + state.vz * dt;
   state.hitGuardrail = false;
 
-  if (isPositionWalkable(nextX, nextZ)) {
+  if (canStepTo(nextX, nextZ, state.y)) {
     state.x = nextX;
     state.z = nextZ;
-  } else if (isPositionWalkable(nextX, state.z)) {
+  } else if (canStepTo(nextX, state.z, state.y)) {
     state.x = nextX;
     state.vz *= 0.25;
     state.hitGuardrail = true;
-  } else if (isPositionWalkable(state.x, nextZ)) {
+  } else if (canStepTo(state.x, nextZ, state.y)) {
     state.z = nextZ;
     state.vx *= 0.25;
     state.hitGuardrail = true;
@@ -123,7 +135,7 @@ export function stepPlayerKinematics(
         const off = GUARDRAIL_OFFSETS[i];
         const tx = state.x + Math.cos(ang + off) * speed * dt * 0.72;
         const tz = state.z + Math.sin(ang + off) * speed * dt * 0.72;
-        if (isPositionWalkable(tx, tz)) {
+        if (canStepTo(tx, tz, state.y)) {
           state.x = tx;
           state.z = tz;
           moved = true;
@@ -176,7 +188,7 @@ export function stepPlayerKinematics(
   }
 
   // Vertical gravity + ground snapping
-  const groundY = computeTerrainHeight(state.x, state.z);
+  const groundY = getPlayerSupportHeight(state.x, state.z);
   const wasGrounded = state.grounded;
   state.vy += GRAVITY * dt;
   state.y += state.vy * dt;

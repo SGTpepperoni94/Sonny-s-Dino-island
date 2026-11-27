@@ -1,3 +1,4 @@
+import { DOCKS, PLANK_CENTRE_Y, PLANK_DEPTH, PLANK_SPACING, PLANK_THICKNESS, PLANK_WIDTH } from '../config/docks';
 import * as THREE from 'three';
 import type { MaterialLibrary } from '../engine/MaterialLibrary';
 import type { ParticlePoolSystem } from '../gameplay/ParticlePoolSystem';
@@ -90,13 +91,9 @@ export class LandmarkSystem implements IGameSystem {
     trackGeo: <T extends THREE.BufferGeometry>(g: T) => T,
   ): void {
     const presets = this.materials.getPalettePresets();
-    const docks = [
-      { x: -26, z: 130.6, rotY: 0.12, planks: 10 },
-      { x: 124.8, z: 21.8, rotY: 2.13, planks: 8 },
-    ];
-    const totalPlanks = docks.reduce((sum, d) => sum + d.planks, 0);
-    const plankInst = new THREE.InstancedMesh(trackGeo(new THREE.BoxGeometry(3.6, 0.28, 0.72)), presets.woodDock, totalPlanks);
-    const postInst = new THREE.InstancedMesh(trackGeo(new THREE.CylinderGeometry(0.22, 0.26, 3.2, 6)), presets.palmTrunk, docks.length * 6);
+    const totalPlanks = DOCKS.reduce((sum, d) => sum + d.planks, 0);
+    const plankInst = new THREE.InstancedMesh(trackGeo(new THREE.BoxGeometry(PLANK_WIDTH, PLANK_THICKNESS, PLANK_DEPTH)), presets.woodDock, totalPlanks);
+    const postInst = new THREE.InstancedMesh(trackGeo(new THREE.CylinderGeometry(0.22, 0.26, 3.2, 6)), presets.palmTrunk, DOCKS.length * 6);
     plankInst.castShadow = true;
     plankInst.receiveShadow = true;
     postInst.castShadow = true;
@@ -104,12 +101,12 @@ export class LandmarkSystem implements IGameSystem {
     const dummy = new THREE.Object3D();
     let pIdx = 0;
     let postIdx = 0;
-    for (const d of docks) {
+    for (const d of DOCKS) {
       const cos = Math.cos(d.rotY);
       const sin = Math.sin(d.rotY);
       for (let i = 0; i < d.planks; i++) {
-        const localZ = i * 0.85;
-        dummy.position.set(d.x + sin * localZ, 0.72, d.z + cos * localZ);
+        const localZ = i * PLANK_SPACING;
+        dummy.position.set(d.x + sin * localZ, PLANK_CENTRE_Y, d.z + cos * localZ);
         dummy.rotation.set(0, d.rotY, 0);
         dummy.scale.set(1, 1, 1);
         dummy.updateMatrix();

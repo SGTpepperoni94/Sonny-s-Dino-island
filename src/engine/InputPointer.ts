@@ -1,3 +1,4 @@
+import { DECK_TOP, onDockDeck } from '../config/docks';
 import * as THREE from 'three';
 
 export interface RaycastGroundHit {
@@ -32,6 +33,20 @@ export class TerrainPointerRaycaster {
     this.raycaster.setFromCamera(this.pointerNdc, camera);
     this.hits.length = 0;
     this.raycaster.intersectObject(target, false, this.hits);
+    const ray = this.raycaster.ray;
+    if (ray.direction.y < -0.00001) {
+      const distance = (DECK_TOP - ray.origin.y) / ray.direction.y;
+      if (distance >= 0 && distance < (this.hits[0]?.distance ?? Infinity)) {
+        const x = ray.origin.x + distance * ray.direction.x;
+        const z = ray.origin.z + distance * ray.direction.z;
+        if (onDockDeck(x, z)) {
+          this.out.hit = true;
+          this.out.x = x;
+          this.out.z = z;
+          return this.out;
+        }
+      }
+    }
     if (this.hits.length > 0) {
       this.out.hit = true;
       this.out.x = this.hits[0].point.x;
