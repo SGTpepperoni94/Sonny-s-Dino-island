@@ -12,6 +12,7 @@ import type { ParticlePoolSystem } from './ParticlePoolSystem';
 import { PlayerFeedback } from './PlayerFeedback';
 import {
   createPlayerKinematics,
+  getPlayerSupportHeight,
   stepPlayerKinematics,
   type PlayerKinematicsState,
   type StepEvents,
@@ -186,7 +187,7 @@ export class PlayerSystem implements IGameSystem {
       if (this.clickRing) {
         this.clickRing.visible = inputState.clickTargetActive;
         if (inputState.clickTargetActive) {
-          const ry = this.terrain.getTerrainHeight(inputState.clickTargetX, inputState.clickTargetZ);
+          const ry = getPlayerSupportHeight(inputState.clickTargetX, inputState.clickTargetZ);
           this.clickRing.position.set(inputState.clickTargetX, Math.max(0.08, ry + 0.08), inputState.clickTargetZ);
           this.clickRing.scale.setScalar(0.92 + Math.sin(elapsedTime * 6.5) * 0.14);
         }
@@ -206,7 +207,7 @@ export class PlayerSystem implements IGameSystem {
       this.modelPivot.scale.set(this.kinematics.squashX, this.kinematics.squashY, this.kinematics.squashX);
     }
     if (this.contactShadow) {
-      const groundY = this.terrain.getTerrainHeight(this.kinematics.x, this.kinematics.z);
+      const groundY = getPlayerSupportHeight(this.kinematics.x, this.kinematics.z);
       const lift = Math.max(0, this.kinematics.y - groundY);
       this.contactShadow.position.set(this.kinematics.x, Math.max(0.04, groundY + 0.04), this.kinematics.z);
       this.contactShadow.scale.setScalar(Math.max(0.45, 1 - lift * 0.12));
