@@ -114,7 +114,7 @@ export interface SelfTestReport {
   perf: PerfStats;
 }
 
-export type CapturePresetId =
+export type BiomeCapturePresetId =
   | 'title'
   | 'harbor'
   | 'jungle'
@@ -122,6 +122,51 @@ export type CapturePresetId =
   | 'volcano'
   | 'lagoon'
   | 'skull-cave';
+
+export type IslandAnglePresetId =
+  | 'birds-eye'
+  | 'angle-south'
+  | 'angle-sw'
+  | 'angle-west'
+  | 'angle-nw'
+  | 'angle-north'
+  | 'angle-ne'
+  | 'angle-east'
+  | 'angle-se';
+
+export type CapturePresetId = BiomeCapturePresetId | IslandAnglePresetId;
+
+export type DinoSpecies =
+  | 'TRex'
+  | 'Triceratops'
+  | 'Stegosaurus'
+  | 'Velociraptor'
+  | 'Apatosaurus'
+  | 'Parasaurolophus';
+
+export type DinoActionName = 'Idle' | 'Walk' | 'Run' | 'Attack' | 'Death' | 'Jump';
+
+export interface DinoInstanceInfo {
+  id: string;
+  species: DinoSpecies;
+  biome: BiomeId;
+  action: DinoActionName;
+  availableActions: DinoActionName[];
+  scale: number;
+  x: number;
+  y: number;
+  z: number;
+  throttled: boolean;
+}
+
+export interface DinoStats {
+  expectedCount: number;
+  loadedCount: number;
+  failedCount: number;
+  speciesLoaded: DinoSpecies[];
+  ready: boolean;
+  instances: DinoInstanceInfo[];
+}
 
 export interface SonnyIslandDebugApi {
   teleportToBiome: (anchorOrBiome: AnchorId | BiomeId) => boolean;
@@ -133,6 +178,8 @@ export interface SonnyIslandDebugApi {
   triggerJump: () => void;
   startGame: () => void;
   resetCycle: () => { before: PerfStats; after: PerfStats };
+  setDinoAction: (idOrAll: string, action: DinoActionName) => boolean;
+  getDinoStats: () => DinoStats;
 }
 
 declare global {

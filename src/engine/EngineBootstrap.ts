@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { CAPTURE_PRESETS, isCapturePresetId } from '../config/capturePresets';
+import { PALETTE } from '../config/palette';
 import { BIOME_DEFAULT_ANCHOR, WORLD_ANCHORS } from '../config/worldAnchors';
 import { CameraSystem } from '../gameplay/CameraSystem';
+import { DinoSystem } from '../gameplay/DinoSystem';
 import { ParticlePoolSystem } from '../gameplay/ParticlePoolSystem';
 import { PlayerSystem } from '../gameplay/PlayerSystem';
 import type {
@@ -21,6 +23,7 @@ import { OceanSystem } from '../world/OceanSystem';
 import { PropScatterSystem } from '../world/PropScatterSystem';
 import type { TerrainQuery } from '../world/TerrainQuery';
 import type { AssetManager } from './AssetManager';
+import type { AssetManifestClient } from './AssetManifestClient';
 import type { AudioEngine } from './AudioEngine';
 import type { InputManager } from './InputManager';
 import type { InteractionArbitrator } from './InteractionArbitrator';
@@ -29,6 +32,7 @@ import type { MaterialLibrary } from './MaterialLibrary';
 export interface WiredSystems {
   systems: IGameSystem[];
   terrainSystem: IslandTerrainSystem;
+  dinoSystem: DinoSystem;
   playerSystem: PlayerSystem;
   cameraSystem: CameraSystem;
 }
@@ -37,6 +41,7 @@ export interface EngineServices {
   terrain: TerrainQuery;
   materials: MaterialLibrary;
   assets: AssetManager;
+  dinoManifest: AssetManifestClient;
   audio: AudioEngine;
   input: InputManager;
   arbitrator: InteractionArbitrator;
@@ -48,6 +53,7 @@ export function createAndInitSystems(ctx: EngineContext, services: EngineService
   const particleSystem = new ParticlePoolSystem();
   const landmarkSystem = new LandmarkSystem(services.materials, particleSystem);
   const propSystem = new PropScatterSystem(services.terrain, services.assets, services.materials);
+  const dinoSystem = new DinoSystem(services.terrain, services.dinoManifest);
   const playerSystem = new PlayerSystem(
     services.terrain,
     services.assets,
@@ -64,12 +70,13 @@ export function createAndInitSystems(ctx: EngineContext, services: EngineService
     particleSystem,
     landmarkSystem,
     propSystem,
+    dinoSystem,
     playerSystem,
     cameraSystem,
   ];
   for (let i = 0; i < systems.length; i++) systems[i].init(ctx);
   services.input.setTerrainTarget(terrainSystem.getTerrainMesh());
-  return { systems, terrainSystem, playerSystem, cameraSystem };
+  return { systems, terrainSystem, dinoSystem, playerSystem, cameraSystem };
 }
 
 export function resolveAnchorId(anchorOrBiome: AnchorId | BiomeId): AnchorId | undefined {
@@ -135,18 +142,32 @@ export function buildHudSnapshot(params: {
   };
 }
 
+function syncAerialCaptureScene(scene: THREE.Scene, presetId: CapturePresetId | null): void {
+  const isAerial = presetId !== null && Boolean(CAPTURE_PRESETS[presetId]?.aerial);
+  const clouds = scene.getObjectByName('SkyClouds');
+  if (clouds) clouds.visible = !isAerial;
+  if (scene.fog instanceof THREE.FogExp2) {
+    scene.fog.density = presetId === 'birds-eye' ? 0.00045 : isAerial ? 0.00085 : PALETTE.fogDensity;
+  }
+}
+
 export function applyCapturePreset(params: {
   name: CapturePresetId | null;
   phase: GamePhase;
+  scene: THREE.Scene;
   playerSystem: PlayerSystem;
   cameraSystem: CameraSystem;
+  dinoSystem?: DinoSystem;
   dirLight: THREE.DirectionalLight;
   scratchPos: THREE.Vector3;
   renderFrame: () => void;
 }): boolean {
   if (params.name === null) {
+    syncAerialCaptureScene(params.scene, null);
     params.cameraSystem.clearCaptureOverride();
     if (params.phase === 'playing') params.cameraSystem.snapBehindPlayer();
+    params.dinoSystem?.setAerialCullOverride(false);
+    params.dinoSystem?.syncVisibilityForCamera();
     params.renderFrame();
     return true;
   }
@@ -155,7 +176,10 @@ export function applyCapturePreset(params: {
   const anchor = WORLD_ANCHORS[preset.anchor];
   params.playerSystem.teleport(anchor.x, anchor.z, anchor.facingYaw);
   updateSunShadowFrustum(params.dirLight, params.playerSystem, params.scratchPos);
+  syncAerialCaptureScene(params.scene, params.name);
   params.cameraSystem.setCaptureOverride(preset.pos, preset.lookAt);
+  params.dinoSystem?.setAerialCullOverride(params.name === 'title' || Boolean(preset.aerial));
+  params.dinoSystem?.syncVisibilityForCamera();
   params.renderFrame();
   return true;
 }

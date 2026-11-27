@@ -1,7 +1,17 @@
 {
-  "phase": "Phase 1K — Midground Silhouettes & Volcano Drama",
-  "timestamp": "2026-11-25 05:14 UTC",
-  "calls": 46,
-  "triangles": 939220,
-  "selfTest": "PASS (5/5)"
+  "phase": "Phase 2B — Dino CDN Asset Pipeline & Animation Showcase",
+  "timestamp": "2026-11-26 20:15 UTC",
+  "calls": 67,
+  "triangles": 344460,
+  "dinosLoaded": 9,
+  "selfTest": "PASS (7/7)",
+  "perPreset": {
+    "title": { "calls": 114, "triangles": 356626, "dinosLoaded": 9 },
+    "harbor": { "calls": 67, "triangles": 344460, "dinosLoaded": 9 },
+    "jungle": { "calls": 36, "triangles": 307758, "dinosLoaded": 9 },
+    "ruins": { "calls": 30, "triangles": 305176, "dinosLoaded": 9 },
+    "volcano": { "calls": 33, "triangles": 300842, "dinosLoaded": 9 },
+    "lagoon": { "calls": 42, "triangles": 297986, "dinosLoaded": 9 },
+    "skull-cave": { "calls": 92, "triangles": 311566, "dinosLoaded": 9 }
+  }
 }

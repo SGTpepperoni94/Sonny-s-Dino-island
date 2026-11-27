@@ -7,29 +7,32 @@ Imports strictly flow downward: `types -> config -> engine -> world -> gameplay 
 - `src/config/`:
   - `worldAnchors.ts`: 8 named `WORLD_ANCHORS` across the 6 biomes + reserved spatial footprints (`spawn-clear`, `harbor-family-hub`, `harbor-ranch-sightline`, `ranch-plateau`, `ranch-amy-hub`, and landmark pads).
   - `assets.ts`: Semantic `ASSET_CATALOG` mapping logical keys (`character.sonny`, `flora.palm`, `ship.sloop`, plus reserved Build 2+ slots `npc.amy`, `npc.seahawk`, `npc.artie`, `hero.bedShip`, `dino.trex`, `ranch.fence`) to pinned Quaternius CDN models and custom hero `.glb` sockets.
+  - `dinoCatalog.ts`: Pinned immutable `quaternius-dinosaur-kit@v1.0.0` CDN base/manifest URLs, target real-world heights (`TRex` 5.2m, `Apatosaurus` 4.8m, `Stegosaurus` 3.6m, `Triceratops` 3.4m, `Parasaurolophus` 3.2m, `Velociraptor` 2.1m), exact species-prefixed clip maps (`<Species>_Idle/Walk/Run/Attack/Death/Jump`), and deterministic biome showcase spawn definitions.
   - `palette.ts`: Tropical low-poly sunlit color register matching the 7 visual reference images.
 - `src/engine/`:
-  - `GameEngine.ts`: Thin coordinator (`<= 250` LOC) owning the tick loop (single `input.sample(dt)` per frame before system updates), `IGameSystem` lifecycle, throttled ~9 Hz React HUD snapshots, and `resetCycle()` / `dispose()`.
-  - `RendererFactory.ts`: Software-WebGL detection (`UNMASKED_RENDERER_WEBGL`), `WebGLRenderer` + `RoomEnvironment` PMREM + sun shadow stage creation, and WebGL2 `fenceSync` `scheduleAfterDraw()` pacing.
-  - `EngineBootstrap.ts`: Composition root wiring world & gameplay systems, sun shadow frustum tracking, `PerfStats` / `HudSnapshot` builders, and `window.__SONNY_ISLAND__` bridge registration.
-  - `SelfTestRunner.ts`: Automated `?test` runner asserting `calls <= 150`, all 8 `WORLD_ANCHORS` valid & walkable, 0 NaN transforms, `PointLight <= 6`, and zero geometry/texture leak growth across `resetCycle()`.
-  - `AssetManager.ts`: Pinned Quaternius manifest loader with `baseUrl` override, failed-promise eviction, `SkeletonUtils.clone` for rigged models, `userData.sharedResource` buffer protection, and `InstancedMesh` geometry extraction.
+  - `GameEngine.ts`: Thin coordinator (`<= 250` LOC) owning the tick loop (single `input.sample(dt)` per frame before system updates), `IGameSystem` lifecycle, persistent `AssetManager` + `AssetManifestClient` caches, throttled ~9 Hz React HUD snapshots, and `resetCycle()` / `dispose()`.
+  - `RendererFactory.ts`: Software-WebGL detection (`UNMASKED_RENDERER_WEBGL`), `WebGLRenderer` + `RoomEnvironment` PMREM + stylized gradient sky dome + sun shadow stage creation, and WebGL2 `fenceSync` `scheduleAfterDraw()` pacing.
+  - `EngineBootstrap.ts`: Composition root wiring world & gameplay systems (including `DinoSystem`), sun shadow frustum tracking, `PerfStats` / `HudSnapshot` builders, and `window.__SONNY_ISLAND__` bridge registration (`setDinoAction`, `getDinoStats`).
+  - `SelfTestRunner.ts`: Automated `?test` runner asserting `calls <= 150`, `triangles <= 550,000`, all 8 `WORLD_ANCHORS` valid & walkable, 0 NaN transforms, `PointLight <= 6`, `dinosLoadedAndAnimated` (all 9 dinos / 6 species + `Idle`/`Walk`/`Run` playback), and zero geometry/texture leak growth across `resetCycle()`.
+  - `AssetManager.ts`: Pinned Quaternius Pirate Kit manifest loader with `baseUrl` override, failed-promise eviction, `SkeletonUtils.clone` for rigged models, `userData.sharedResource` buffer protection, and `InstancedMesh` geometry extraction.
+  - `AssetManifestClient.ts`: Pinned `@v1.0.0` dinosaur manifest (`"models"` schema) & GLB client with `@main`-rejection guard, in-flight Promise deduplication, failed-promise eviction, synchronous `getCachedModel()` reuse across `resetCycle()`, and `userData.sharedResource = true` tagging.
   - `AudioEngine.ts`: `calm.mp3` CDN streaming (silent on Title Screen, `navigator.userActivation` guard, 1.5s fade-in on Play) + procedural Web Audio SFX.
   - `InputManager.ts` / `InputGamepad.ts` / `InputPointer.ts`: 4-mode zero-GC input (Gamepad with deadzone scratch vector, WASD+Arrows, Desktop Left-Click/Hold Click-to-Run with reusable raycaster hits array + Right-Drag Orbit, Mobile Touch).
   - `InteractionArbitrator.ts`: Single facing-cone winner selector for Build 2+ 3-button ergonomics.
   - `SaveManager.ts`: Versioned `localStorage` persistence (`schemaVersion: 1`, `migrateSave()`).
-  - `MaterialLibrary.ts`: Centralized flat-shaded low-poly PBR material registry with terrain splatmap & volcanic emissive bounce hook.
+  - `MaterialLibrary.ts`: Centralized flat-shaded low-poly PBR material registry with terrain splatmap, vertex-AO presets & volcanic emissive bounce hook.
 - `src/world/`:
   - `terrainMath.ts` / `terrainTrails.ts` / `TerrainQuery.ts`: Pure deterministic ~400m island heightfield (`ISLAND_WORLD_RADIUS = 205`), biome classification, trails, lava gully hazard, Skull Rock Cave tunnel/ledge floor, reserved footprint exclusion checks, and walkability rules.
   - `IslandTerrainSystem.ts` / `terrainSplatBaker.ts`: Non-indexed faceted low-poly terrain (`180x180`, ~2.44m facets) with baked world-space splatmap + instanced drifting clouds.
   - `OceanSystem.ts` / `oceanShaders.ts`: Radially-warped faceted GPU-wave ocean (`140x140`) + CPU `getOceanWaveHeight()` mirror + bilinear `coastTexture` sparse coastal ribbon shoreline foam with `polygonOffset`.
-  - `LandmarkSystem.ts` / `SkullRockCaveBuilder.ts` / `WaterfallLagoonBuilder.ts`: Skull Rock Pirate Cave (SE coastline), Crystal Waterfall Lagoon (East), Smoking Volcano lava crater/river (far NE, ~73–82m), and harbor/lagoon wooden docks.
-  - `PropScatterSystem.ts` / `ScatterLayout.ts`: Deterministic placement layout + batched `InstancedMesh` Quaternius Pirate Kit props, offshore bobbing `Ship_Small` (`1.05`), harbor shacks (`0.66–0.70`), instant procedural fallbacks, and strict `TerrainQuery.isFootprintReserved(...)` clearance.
+  - `LandmarkSystem.ts` / `SkullRockCaveBuilder.ts` / `WaterfallLagoonBuilder.ts` / `VolcanoBuilder.ts`: Skull Rock Pirate Cave (SE coastline), Crystal Waterfall Lagoon (East), Smoking Volcano lava crater/river + basalt crags (far NE, ~73–82m), and harbor/lagoon wooden docks.
+  - `PropScatterSystem.ts` / `ScatterLayout.ts` / `ScatterMidground.ts` / `ScatterGeometry.ts`: Deterministic placement layout + batched `InstancedMesh` props, stylized procedural palms, midground silhouettes, offshore bobbing `Ship_Small` (`1.05`), harbor shacks (`0.66–0.70`), contact shadows, and strict `TerrainQuery.isFootprintReserved(...)` clearance.
 - `src/gameplay/`:
   - `ParticlePoolSystem.ts`: Single `InstancedMesh` ring buffer (capacity 180, zero-GC) for smoke, mist, water splash, footstep dust, and wave sparkles.
   - `PlayerPhysics.ts` / `PlayerSystem.ts` / `ProceduralSonnyBuilder.ts` / `AnimationStateController.ts` / `PlayerFeedback.ts`: Pure zero-GC kid-safe movement + invisible guardrail sliding, Sonny (`Characters_Henry` + procedural fallback), exact-name animation matching, footsteps/splash/jump feedback, and Wave emote.
+  - `DinoRigFactory.ts` / `DinoAnimator.ts` / `DinoSystem.ts`: Phase 2B rigged dinosaur showcase pipeline (`SkeletonUtils.clone`, dynamic `targetHeightMeters / entry.height` scaling, `TerrainQuery` + slope-sink grounding, exact-name `<Species>_<Action>` playback across all 6 clips with smooth crossfades, ~90m + frustum mixer throttling, single batched `DinoContactShadows` `InstancedMesh`, and `disposeClonedSkeletons()` leak prevention).
   - `CameraSystem.ts`: Live harbor orbit Title Screen + effortless auto-follow behind-the-back gameplay camera reading single-sampled input state.
-- `src/ui/`: Zero-text `TitleOverlay`, `GameHud`, `TouchThumbstick`, plus URL-gated `?debug` biome bar.
+- `src/ui/`: Zero-text `TitleOverlay`, `GameHud`, `TouchThumbstick`, `CaptureGallery`, plus URL-gated `?debug` biome bar.
 
 ## Family Cast & Phase 2 Hub Flow (Reserved in Build 1 — Spawning Begins in Build 2)
 - **Sonny** (`character.sonny` / `Characters_Henry`): Playable captain (**live in Build 1**), spawns on the golden beach at `harborSpawn` (`-6, 122`).

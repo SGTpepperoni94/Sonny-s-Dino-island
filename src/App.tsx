@@ -33,16 +33,16 @@ export default function App() {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const engineRef = useRef<GameEngine | null>(null);
   const [snapshot, setSnapshot] = useState<HudSnapshot>(INITIAL_SNAPSHOT);
-  const [galleryOpen, setGalleryOpen] = useState(false);
-
   const queryFlags = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     return {
       debug: params.has('debug'),
       autostart: params.get('autostart') === '1',
       runTest: params.has('test'),
+      gallery: params.has('gallery'),
     };
   }, []);
+  const [galleryOpen, setGalleryOpen] = useState(() => queryFlags.gallery);
 
   // Mount WebGLRenderer & GameEngine exactly once; never tear down on React state updates
   useEffect(() => {
@@ -60,11 +60,19 @@ export default function App() {
 
     let testTimer = 0;
     if (queryFlags.runTest) {
-      testTimer = window.setTimeout(() => {
-        const report = engine.runSelfTest();
-        (window as unknown as { __SONNY_TEST_REPORT__?: unknown }).__SONNY_TEST_REPORT__ = report;
-        console.info('[SonnyIsland ?test]', report);
-      }, 450);
+      const startedAt = performance.now();
+      const pollReady = () => {
+        const ready = engine.getDinoStats().ready;
+        const timedOut = performance.now() - startedAt > 8000;
+        if (ready || timedOut) {
+          const report = engine.runSelfTest();
+          (window as unknown as { __SONNY_TEST_REPORT__?: unknown }).__SONNY_TEST_REPORT__ = report;
+          console.info('[SonnyIsland ?test]', report);
+        } else {
+          testTimer = window.setTimeout(pollReady, 250);
+        }
+      };
+      testTimer = window.setTimeout(pollReady, 500);
     }
 
     return () => {

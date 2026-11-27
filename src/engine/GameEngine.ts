@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { WORLD_ANCHORS } from '../config/worldAnchors';
 import type { CameraSystem } from '../gameplay/CameraSystem';
+import type { DinoSystem } from '../gameplay/DinoSystem';
 import type { PlayerSystem } from '../gameplay/PlayerSystem';
-import type { AnchorId, BiomeId, CapturePresetId, GamePhase, HudSnapshot, IGameSystem, PerfStats, SelfTestReport } from '../types/game';
+import type { AnchorId, BiomeId, CapturePresetId, DinoActionName, DinoStats, GamePhase, HudSnapshot, IGameSystem, PerfStats, SelfTestReport } from '../types/game';
 import { TerrainQuery } from '../world/TerrainQuery';
 import { AssetManager } from './AssetManager';
+import { AssetManifestClient } from './AssetManifestClient';
 import { AudioEngine } from './AudioEngine';
 import { applyCapturePreset, buildHudSnapshot, createAndInitSystems, exposeSonnyDebugApi, readPerfStats, resolveAnchorId, updateSunShadowFrustum } from './EngineBootstrap';
 import { InputManager } from './InputManager';
@@ -29,12 +31,13 @@ export class GameEngine {
   public readonly terrain = new TerrainQuery();
   public readonly materials = new MaterialLibrary();
   public readonly assets = new AssetManager();
+  public readonly dinoManifest = new AssetManifestClient();
   public readonly saveManager = new SaveManager();
   public readonly audio: AudioEngine;
   public readonly input = new InputManager();
   public readonly arbitrator = new InteractionArbitrator();
-
   private systems: IGameSystem[] = [];
+  private dinoSystem!: DinoSystem;
   private playerSystem!: PlayerSystem;
   private cameraSystem!: CameraSystem;
   private phase: GamePhase = 'title';
@@ -81,6 +84,8 @@ export class GameEngine {
       triggerJump: () => this.triggerJump(),
       startGame: () => this.startGame(),
       resetCycle: () => this.resetCycle(),
+      setDinoAction: (idOrAll, action) => this.setDinoAction(idOrAll, action),
+      getDinoStats: () => this.getDinoStats(),
     });
     document.body.dataset.state = this.phase;
     this.emitHudSnapshot();
@@ -91,9 +96,10 @@ export class GameEngine {
   private initSystems(): void {
     const wired = createAndInitSystems(
       { scene: this.scene, camera: this.camera, renderer: this.renderer, isSoftwareGl: this.isSoftwareGl, elapsedTime: this.elapsedTime, getPhase: () => this.phase },
-      { terrain: this.terrain, materials: this.materials, assets: this.assets, audio: this.audio, input: this.input, arbitrator: this.arbitrator },
+      { terrain: this.terrain, materials: this.materials, assets: this.assets, dinoManifest: this.dinoManifest, audio: this.audio, input: this.input, arbitrator: this.arbitrator },
     );
     this.systems = wired.systems;
+    this.dinoSystem = wired.dinoSystem;
     this.playerSystem = wired.playerSystem;
     this.cameraSystem = wired.cameraSystem;
     updateSunShadowFrustum(this.dirLight, this.playerSystem, this._sonnyPos);
@@ -105,6 +111,8 @@ export class GameEngine {
     document.body.dataset.state = this.phase;
     this.input.clearAllHeld();
     this.cameraSystem.snapBehindPlayer();
+    this.dinoSystem.setAerialCullOverride(false);
+    this.dinoSystem.syncVisibilityForCamera();
     this.audio.startIslandMusic();
     this.emitHudSnapshot();
   }
@@ -139,7 +147,7 @@ export class GameEngine {
   }
 
   public setCapturePreset(name: CapturePresetId | null): boolean {
-    const ok = applyCapturePreset({ name, phase: this.phase, playerSystem: this.playerSystem, cameraSystem: this.cameraSystem, dirLight: this.dirLight, scratchPos: this._sonnyPos, renderFrame: () => this.renderer.render(this.scene, this.camera) });
+    const ok = applyCapturePreset({ name, phase: this.phase, scene: this.scene, playerSystem: this.playerSystem, cameraSystem: this.cameraSystem, dinoSystem: this.dinoSystem, dirLight: this.dirLight, scratchPos: this._sonnyPos, renderFrame: () => this.renderer.render(this.scene, this.camera) });
     if (ok) this.emitHudSnapshot();
     return ok;
   }
@@ -156,16 +164,13 @@ export class GameEngine {
     this.fpsFrames++;
     if (this.fpsAccum >= 0.5) {
       this.currentFps = Math.round(this.fpsFrames / this.fpsAccum);
-      this.fpsAccum = 0;
-      this.fpsFrames = 0;
+      this.fpsAccum = this.fpsFrames = 0;
     }
-
     this.audio.update(dt);
     this.input.sample(dt);
     for (let i = 0; i < this.systems.length; i++) this.systems[i].update(dt, this.elapsedTime);
     updateSunShadowFrustum(this.dirLight, this.playerSystem, this._sonnyPos);
     this.renderer.render(this.scene, this.camera);
-
     this.hudEmitAccum += dt;
     const biome = this.terrain.getBiomeAt(this.playerSystem.kinematics.x, this.playerSystem.kinematics.z);
     if (biome !== this.lastBiome) {
@@ -182,24 +187,18 @@ export class GameEngine {
 
   private scheduleNextTick(): void {
     if (this.disposed) return;
-    if (this.isSoftwareGl) {
-      scheduleAfterDraw(this.renderer, () => this.disposed, (id) => { this.frameId = id; }, this.tick);
-    } else {
-      this.frameId = window.requestAnimationFrame(this.tick);
-    }
+    if (this.isSoftwareGl) scheduleAfterDraw(this.renderer, () => this.disposed, (id) => { this.frameId = id; }, this.tick);
+    else this.frameId = window.requestAnimationFrame(this.tick);
   }
 
+  public setDinoAction(idOrAll: string, action: DinoActionName): boolean { return this.dinoSystem.setAction(idOrAll, action); }
+  public getDinoStats(): DinoStats { return this.dinoSystem.getStats(); }
   public getPerfStats(): PerfStats { return readPerfStats(this.renderer, this.currentFps, this.isSoftwareGl); }
   private emitHudSnapshot(): void { this.onHudSnapshot(this.getSnapshot()); }
   private onContextLost = (e: Event): void => { e.preventDefault(); };
-
   public getSnapshot(): HudSnapshot {
-    return buildHudSnapshot({
-      phase: this.phase, isTouch: this.isTouch, playerSystem: this.playerSystem,
-      terrain: this.terrain, audio: this.audio, arbitrator: this.arbitrator, perf: this.getPerfStats(),
-    });
+    return buildHudSnapshot({ phase: this.phase, isTouch: this.isTouch, playerSystem: this.playerSystem, terrain: this.terrain, audio: this.audio, arbitrator: this.arbitrator, perf: this.getPerfStats() });
   }
-
   public resetCycle(): { before: PerfStats; after: PerfStats } {
     this.renderer.render(this.scene, this.camera);
     const before = this.getPerfStats();
@@ -211,15 +210,14 @@ export class GameEngine {
     this.renderer.render(this.scene, this.camera);
     return { before, after: this.getPerfStats() };
   }
-
   public runSelfTest(): SelfTestReport {
     return executeEngineSelfTest({
       scene: this.scene, terrain: this.terrain,
       renderFrame: () => this.renderer.render(this.scene, this.camera),
       getPerfStats: () => this.getPerfStats(), resetCycle: () => this.resetCycle(),
+      dinoProbe: { verifyShowcaseClips: () => this.dinoSystem.verifyShowcaseClips() },
     });
   }
-
   private onResize = (): void => {
     const w = this.container.clientWidth || window.innerWidth;
     const h = Math.max(1, this.container.clientHeight || window.innerHeight);
@@ -227,7 +225,6 @@ export class GameEngine {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
   };
-
   public dispose(): void {
     this.disposed = true;
     window.cancelAnimationFrame(this.frameId);
@@ -240,6 +237,7 @@ export class GameEngine {
     this.audio.dispose();
     this.materials.dispose();
     this.assets.dispose();
+    this.dinoManifest.dispose();
     this.skyDome.geometry.dispose();
     (this.skyDome.material as THREE.Material).dispose();
     this.envRenderTarget.dispose();

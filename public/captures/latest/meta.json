@@ -1,7 +1,17 @@
 {
-  "phase": "Phase 2A — Docs Sync & Foliage Tri-Budget Optimization",
-  "timestamp": "2026-11-25 06:27 UTC",
-  "calls": 45,
-  "triangles": 334728,
-  "selfTest": "PASS (6/6)"
+  "phase": "Phase 2B Polish Pass — Dino Grounding, Sunlit Materials & Title Draw-Call Trim",
+  "timestamp": "2026-11-26 22:52 UTC",
+  "calls": 67,
+  "triangles": 344460,
+  "dinosLoaded": 9,
+  "selfTest": "PASS (7/7)",
+  "perPreset": {
+    "title": { "calls": 97, "triangles": 348326, "dinosLoaded": 9 },
+    "harbor": { "calls": 67, "triangles": 344460, "dinosLoaded": 9 },
+    "jungle": { "calls": 36, "triangles": 307758, "dinosLoaded": 9 },
+    "ruins": { "calls": 30, "triangles": 305176, "dinosLoaded": 9 },
+    "volcano": { "calls": 33, "triangles": 300842, "dinosLoaded": 9 },
+    "lagoon": { "calls": 42, "triangles": 297986, "dinosLoaded": 9 },
+    "skull-cave": { "calls": 92, "triangles": 311566, "dinosLoaded": 9 }
+  }
 }

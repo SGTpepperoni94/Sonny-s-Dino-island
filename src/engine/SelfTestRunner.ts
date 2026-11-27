@@ -11,12 +11,17 @@ export interface TerrainWalkabilityProbe {
   isWalkable(x: number, z: number): boolean;
 }
 
+export interface DinoSelfTestProbe {
+  verifyShowcaseClips: () => { ok: boolean; detail: string };
+}
+
 export interface SelfTestHarness {
   scene: THREE.Scene;
   terrain: TerrainWalkabilityProbe;
   renderFrame: () => void;
   getPerfStats: () => PerfStats;
   resetCycle: () => { before: PerfStats; after: PerfStats };
+  dinoProbe?: DinoSelfTestProbe;
 }
 
 export function auditSceneGraph(scene: THREE.Scene): {
@@ -91,7 +96,17 @@ export function executeEngineSelfTest(harness: SelfTestHarness): SelfTestReport 
     detail: `${pointLightCount} PointLights (ceiling ${POINT_LIGHT_CEILING})`,
   });
 
-  // 4. Zero geometry/texture leak growth across resetCycle & post-reset draw calls <= 150
+  // 4. Phase 2B: Dinosaurs loaded from CDN & Idle/Walk/Run clips switch cleanly
+  if (harness.dinoProbe) {
+    const dinoRes = harness.dinoProbe.verifyShowcaseClips();
+    checks.push({
+      name: 'dinosLoadedAndAnimated',
+      passed: dinoRes.ok,
+      detail: dinoRes.detail,
+    });
+  }
+
+  // 5. Zero geometry/texture leak growth across resetCycle & post-reset draw calls <= 150
   const cycle = harness.resetCycle();
   const geoGrowth = cycle.after.geometries - cycle.before.geometries;
   const texGrowth = cycle.after.textures - cycle.before.textures;

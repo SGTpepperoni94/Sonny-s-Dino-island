@@ -1,4 +1,4 @@
-import type { AnchorId, CapturePresetId } from '../types/game';
+import type { AnchorId, BiomeCapturePresetId, CapturePresetId, IslandAnglePresetId } from '../types/game';
 
 export interface CapturePreset {
   readonly id: CapturePresetId;
@@ -7,9 +7,10 @@ export interface CapturePreset {
   readonly pos: readonly [number, number, number];
   readonly lookAt: readonly [number, number, number];
   readonly reference: string;
+  readonly aerial?: boolean;
 }
 
-export const CAPTURE_PRESET_ORDER: readonly CapturePresetId[] = [
+export const CAPTURE_PRESET_ORDER: readonly BiomeCapturePresetId[] = [
   'title',
   'harbor',
   'jungle',
@@ -17,6 +18,18 @@ export const CAPTURE_PRESET_ORDER: readonly CapturePresetId[] = [
   'volcano',
   'lagoon',
   'skull-cave',
+];
+
+export const ISLAND_ANGLE_PRESET_ORDER: readonly IslandAnglePresetId[] = [
+  'birds-eye',
+  'angle-south',
+  'angle-sw',
+  'angle-west',
+  'angle-nw',
+  'angle-north',
+  'angle-ne',
+  'angle-east',
+  'angle-se',
 ];
 
 export const CAPTURE_PRESETS: Record<CapturePresetId, CapturePreset> = {
@@ -75,6 +88,87 @@ export const CAPTURE_PRESETS: Record<CapturePresetId, CapturePreset> = {
     pos: [79.4, 6.2, 131.5],
     lookAt: [95.5, 4.8, 108.0],
     reference: 'skull-cave.png',
+  },
+  'birds-eye': {
+    id: 'birds-eye',
+    label: "Bird's-Eye Top-Down (N Up)",
+    anchor: 'ranchCenter',
+    pos: [0, 425, 8],
+    lookAt: [0, 0, 6],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-south': {
+    id: 'angle-south',
+    label: 'South — Harbor Front',
+    anchor: 'harborSpawn',
+    pos: [0, 134, 322],
+    lookAt: [0, 14, 4],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-sw': {
+    id: 'angle-sw',
+    label: 'Southwest — Harbor & Jungle',
+    anchor: 'jungleTrail',
+    pos: [-230, 134, 230],
+    lookAt: [0, 14, 0],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-west': {
+    id: 'angle-west',
+    label: 'West — Fern Jungle & Ruins',
+    anchor: 'jungleTrail',
+    pos: [-322, 134, 0],
+    lookAt: [0, 14, 0],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-nw': {
+    id: 'angle-nw',
+    label: 'Northwest — Dino Ruins & Volcano',
+    anchor: 'ruinsTerrace',
+    pos: [-232, 144, -232],
+    lookAt: [0, 16, 0],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-north': {
+    id: 'angle-north',
+    label: 'North — Volcano & Ruins',
+    anchor: 'volcanoSummit',
+    pos: [0, 152, -328],
+    lookAt: [0, 18, 0],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-ne': {
+    id: 'angle-ne',
+    label: 'Northeast — Volcano & Lagoon',
+    anchor: 'volcanoSummit',
+    pos: [236, 154, -236],
+    lookAt: [0, 18, 0],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-east': {
+    id: 'angle-east',
+    label: 'East — Waterfall Lagoon & Cave',
+    anchor: 'lagoonDock',
+    pos: [324, 136, 0],
+    lookAt: [0, 14, 0],
+    reference: 'island-overview.png',
+    aerial: true,
+  },
+  'angle-se': {
+    id: 'angle-se',
+    label: 'Southeast — Skull Cave & Harbor',
+    anchor: 'skullCaveMouth',
+    pos: [230, 134, 230],
+    lookAt: [0, 14, 0],
+    reference: 'island-overview.png',
+    aerial: true,
   },
 };
 
